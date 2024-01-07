@@ -1,0 +1,6 @@
+label: gpt
+unit: sectors
+sector-size: 512
+
+start=2048,size=91669,type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B,name="EFI system partition"
+start=93717,size=90000,name="OS Part"
