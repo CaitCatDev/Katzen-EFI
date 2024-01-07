@@ -30,11 +30,12 @@ $(FATIMG): main.efi
 	mcopy -i $@ main.efi ::/EFI/BOOT/bootx64.efi
 	mcopy -i $@ main.efi ::
 
-kuefi.lib: lib/kuefi.c lib/print.c lib/input.c
+kuefi.lib: lib/kuefi.c lib/print.c lib/fs.c lib/input.c
 	$(CC) $(CFLAGS) -c lib/kuefi.c -o kuefi.o
 	$(CC) $(CFLAGS) -c lib/input.c -o input.o
 	$(CC) $(CFLAGS) -c lib/print.c -o print.o
-	$(LD) -lib -out:$@ -subsystem:efi_application kuefi.o print.o input.o
+	$(CC) $(CFLAGS) -c lib/fs.c -o fs.o
+	$(LD) -lib -out:$@ -subsystem:efi_application fs.o kuefi.o print.o input.o
 
 main.efi: main.o kuefi.lib
 	$(LD) $(LDFLAGS) -out:$@ main.o kuefi.lib

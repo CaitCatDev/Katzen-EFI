@@ -11,6 +11,7 @@
 #include <kuefi/protocols/efi_file.h>
 
 #include <kuefi/lib/io.h>
+#include <kuefi/lib/fs.h>
 #include <kuefi/lib/kuefi.h>
 
 #define NULL (void *)0
@@ -22,6 +23,13 @@ efi_status_t EFIAPI efi_main(efi_handle_t image_handle, efi_system_table_t *sys_
 	uint32_t best_mode = 0, best_vert = 0, best_horiz = 0;
 	efi_graphics_output_mode_info_t *mode_info;
 	efi_graphics_output_protocol_t *gop;	
+	efi_file_protocol_t *rootfs;
+	efi_file_protocol_t *boot;
+	efi_file_info_t info[0x400];
+	uintn_t size = 0x400;
+	efi_guid_t file_info_guid = EFI_FILE_INFO_ID;
+	efi_guid_t loaded_image_guid = EFI_LOADED_IMAGE_PROTOCOL_GUID;
+	efi_loaded_image_protocol_t *loaded_image;
 
 	kuefi_global_init(image_handle, sys_table);
 
@@ -43,8 +51,20 @@ efi_status_t EFIAPI efi_main(efi_handle_t image_handle, efi_system_table_t *sys_
 		}
 	}
 
-	kuefi_printf((char16*)u"Press any key to exit\r\n");
+	GBS->handle_protocol(image_handle, &loaded_image_guid, (void**)&loaded_image);
 
+	kuefi_printf((char16*)u"Press any key to exit\r\n");
+	
+	kuefi_open_rootfs(loaded_image->dev_handle, &rootfs);
+
+	if(rootfs->open(rootfs, &boot, (char16*)L".\\EFI\\BOOT\\bootx64.efi", EFI_FILE_MODE_READ, 0)) {
+		kuefi_printf((char16 *)u"Failed to open file bootx64.efi");
+		kuefi_wait_for_key();
+		return 1;
+	}
+	boot->get_info(boot, &file_info_guid, &size, &info);
+	
+	kuefi_printf((char16*)u"%x %s\r\n", info->file_size, info->file_name);
 
 	kuefi_wait_for_key();
 
